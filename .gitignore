@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+#Also ignore the dataset, so that we dont encounter the lfs error.
+datasets/
 # Distribution / packaging
 .Python
 build/
