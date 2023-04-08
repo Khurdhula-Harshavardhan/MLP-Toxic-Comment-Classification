@@ -40,6 +40,17 @@ class MLP_Classifier():
             return simple_preprocess(text, deacc=True, min_len=2, max_len=15)
         except Exception as e:
             print("[ERR] The following error occured while trying to preprocess the data!: "+str(e) )
+    
+    def clean_data(self) -> None:
+        """
+        Applies the method preprocess to the data frame to create the tokens that are necessary for creating embeddings.
+        """
+        try:
+            print("[DATA] Cleaning this data and Creating a new feature that contains all tokens.")
+            self.__data_frame['preprocessed_text'] = self.__data_frame["comment_text"].apply(self.preprocess)
+            print("[DATA] Data cleaned successfully, the new feature created is 'preprocessed_text'.")
+        except Exception as e:
+            print("[ERR] the following error occured while trying to clean the data: "+str(e))
 
     def train_MLP_model(self, path_to_train_file: str, num_layers = 2) -> MLPClassifier:
         """
@@ -48,7 +59,9 @@ class MLP_Classifier():
         """
         try:
             self.read_data(path_to_train_file) #read the csv file.
-            self.get_five()
+            self.get_five() #see the data.
+
+            
 
         except Exception as e:
             print("[ERR] The following error occured while trying to train an MLP classifier: "+str(e))
