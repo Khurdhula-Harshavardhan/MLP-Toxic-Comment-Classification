@@ -75,11 +75,24 @@ class MLP_Classifier():
         This method takes in a list of words within an sentence that has been cleaned.
         Then generates a embedding of fixed size for each word withing numpy mean and word2vec model that was trained previously.
         """
-        words = [word for word in text if word in self.__word2vec_model]
-        if words:
-            return np.mean(self.__word2vec_model.wv[words], axis=0)
-        else:
-            return np.zeros(embedding_size)
+        try:
+            words = [word for word in text if word in self.__word2vec_model]
+            if words:
+                return np.mean(self.__word2vec_model.wv[words], axis=0)
+            else:
+                return np.zeros(embedding_size)
+        except Exception as e:
+            print("[ERR] The following error occured while trying to generate an embedding for a comment: "+str(e))
+        
+    def create_embeddings(self) -> None:
+        """
+        Creates a new feature 'embedding' within the data frame for each comment.
+        This is achieved by the help of method text_to_embeddings that will generate an embedding for each comment.
+        """
+        try:
+            pass
+        except Exception as e:
+            print("[ERR] The following error occured while creating embeddings: " +str(e))
 
     def train_MLP_model(self, path_to_train_file: str, num_layers = 2) -> MLPClassifier:
         """
@@ -93,7 +106,7 @@ class MLP_Classifier():
             self.get_five() #show the updated data frame.
             
             self.train_word2vec_model() #train the word2vec model.
-
+            
         except Exception as e:
             print("[ERR] The following error occured while trying to train an MLP classifier: "+str(e))
 
