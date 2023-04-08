@@ -69,6 +69,18 @@ class MLP_Classifier():
         except Exception as e:
             print("[ERR] The following error occured while trying to train a Word2Vec model: "+str(e))
 
+  
+    def text_to_embedding(self, text, embedding_size = 100) -> list:
+        """
+        This method takes in a list of words within an sentence that has been cleaned.
+        Then generates a embedding of fixed size for each word withing numpy mean and word2vec model that was trained previously.
+        """
+        words = [word for word in text if word in self.__word2vec_model]
+        if words:
+            return np.mean(self.__word2vec_model.wv[words], axis=0)
+        else:
+            return np.zeros(embedding_size)
+
     def train_MLP_model(self, path_to_train_file: str, num_layers = 2) -> MLPClassifier:
         """
         This method, trains a Multi-layer preceptron and then returns it.
