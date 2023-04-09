@@ -5,6 +5,10 @@ from gensim.utils import simple_preprocess
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import classification_report, accuracy_score
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_curve, roc_auc_score, auc
 
 
 class MLP_Classifier():
@@ -124,6 +128,17 @@ class MLP_Classifier():
         except Exception as e:
             print("[ERR] The following error occured while trying to split the dataframe: "+str(e))
 
+    
+
+    def plot_confusion_matrix(self, y_true, y_pred, labels=['Not Toxic', 'Toxic'], title='Confusion Matrix'):
+        cm = confusion_matrix(y_true, y_pred)
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, xticklabels=labels, yticklabels=labels)
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        plt.title(title)
+        plt.show()
+
     def get_model_metrics(self) -> None:
         """
         Prints the metrics for the newly trained MLP classifier.
@@ -131,6 +146,7 @@ class MLP_Classifier():
         try:
             print("[METRICS] Here are the classification metrics for the model: ")
             y_pred = self.__model.predict(self.__X_test)
+            #self.plot_confusion_matrix(y_true=self.__y_test, y_pred=y_pred)
             print(classification_report(self.__y_test, y_pred=y_pred))
         except Exception as e:
             print("[ERR] The following error occured while trying to compute classfication metrics of the MLP model: "+str(e))
@@ -177,8 +193,73 @@ class MLP_Classifier():
             self.__model.fit(self.__X_trian, self.__y_train)
             print("[MLP] Object reference for the trained and newly fitted MLP model: "+str(self.__model))
             self.get_model_metrics() #get the classification metrics of the model.
+            return self.__model
         except Exception as e:
             print("[ERR] The following error occured while trying to train an MLP classifier: "+str(e))
 
-Obj = MLP_Classifier()
-Obj.train_MLP_model("./datasets/train.csv", 3)
+    def get_actuals(self, y_pred) -> list:
+        """
+        Reads the actual labels for the test set and then generates the y_test labeled set.
+        """
+        try:
+            y_test = pd.read_csv("./datasets/test_labels.csv")
+            y_test = y_test.drop(columns=['id', 'severe_toxic', 'obscene','threat','insult','identity_hate'])
+            print(y_test)
+            y_test = y_test['toxic'].replace(-1, 1)
+            y_test = y_test.values
+            print(classification_report(y_test, y_pred))
+        except Exception as e:
+            print("[ERR] the following error occured while trying to get the metrics of test: "+str(e))
+
+    def make_prediction(self, probabilities, threshold = 0.3):
+        """
+        Makes a prediction based on the probabilities of each comment being toxic, and non toxic.
+        """
+        try:
+            results = list()
+            for probability in probabilities:
+                if probability[1] >= threshold:
+                    results.append(1)
+                else:
+                    results.append(0)
+
+            return results
+        except Exception as e:
+            print("[ERR] The following error occured while trying to make predictions: "+str(e))
+    
+    def test_MLP_model(self, path_to_test_file: str, MLP_model: MLPClassifier) -> None:
+        """
+        Tests the currently passed model against a test dataset, and then prints it's metrics as well.
+        This method will also create a output.csv which will be unique each time.
+        """
+        try:
+            if MLP_model is None:
+                raise Exception("None Object passed as a parameter instead of MLPClassifier!")
+            elif self.__word2vec_model is None:
+                raise Exception("No Word2Vec model is has been trained please run the train method before running the test method!")
+            else:
+                print("[TEST] Testing the model now!")
+                self.read_data(path_to_test_file) #read the test file.
+                self.get_five() #print the resulting set
+                self.clean_data() #create a new feature
+                self.create_embeddings() # create embeddings based on this new feature
+                self.get_five()
+                self.__X_test = np.stack(self.__data_frame['embedding'].values)
+                y_pred = self.__model.predict_proba(self.__X_test)
+                
+                not_toxic_probabilities = list()
+                toxic_probabilities = list()
+
+                for probabilities in y_pred:
+                    not_toxic_probabilities.append(probabilities[0])
+                    toxic_probabilities.append(probabilities[1])
+                
+                self.__data_frame['not_toxic_proba'] = not_toxic_probabilities
+                self.__data_frame['toxic_proba'] = toxic_probabilities 
+                self.__data_frame['toxic_label'] = self.make_prediction(probabilities=y_pred)
+                self.get_five()
+                print("[TEST] writing output to output.csv")
+                self.__data_frame.to_csv("output.csv")
+        except Exception as e:
+            print("[ERR] The following error occured while trying to test the method: "+str(e))
+
