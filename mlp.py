@@ -129,9 +129,23 @@ class MLP_Classifier():
         Prints the metrics for the newly trained MLP classifier.
         """
         try:
-            pass
+            print("[METRICS] Here are the classification metrics for the model: ")
+            y_pred = self.__model.predict(self.__X_test)
+            print(classification_report(self.__y_test, y_pred=y_pred))
         except Exception as e:
             print("[ERR] The following error occured while trying to compute classfication metrics of the MLP model: "+str(e))
+
+    def get_layers(self, number: int) -> tuple:
+        """
+        Gets the tuple that serves as layer size.
+        """
+        try:
+            layers= tuple()
+            for _ in range(number):
+                layers = layers + (32,)
+            return layers
+        except Exception as e:
+            print("[ERR] The following error occured while trying to get the total layers: "+str(e))
 
     def train_MLP_model(self, path_to_train_file: str, num_layers = 2) -> MLPClassifier:
         """
@@ -149,8 +163,10 @@ class MLP_Classifier():
 
             self.split_data() #creates training and test set for model classification metrics.
 
+            layers = self.get_layers(num_layers)
+            
             print("[MLP] Creating a new instance of a Multi Layer Perceptron!")
-            self.__model = MLPClassifier(hidden_layer_sizes=(64, 32),max_iter=1000, activation='relu', solver='adam', random_state=42)
+            self.__model = MLPClassifier(hidden_layer_sizes=layers, max_iter=1000, activation='relu', solver='adam', random_state=42)
             print("[MLP] A new instance for Multi Layer Perceptron has been created with the following hyper params: ")
             print("[MLP] Size of Hidden Layers: "+str(num_layers))
             print("[MLP] Max Iterations: 1000")
@@ -160,9 +176,9 @@ class MLP_Classifier():
             print("[MLP] Training this new instance of MLP, please wait this might take more than a minute.")
             self.__model.fit(self.__X_trian, self.__y_train)
             print("[MLP] Object reference for the trained and newly fitted MLP model: "+str(self.__model))
-
+            self.get_model_metrics() #get the classification metrics of the model.
         except Exception as e:
             print("[ERR] The following error occured while trying to train an MLP classifier: "+str(e))
 
 Obj = MLP_Classifier()
-Obj.train_MLP_model("./datasets/train.csv")
+Obj.train_MLP_model("./datasets/train.csv", 3)
