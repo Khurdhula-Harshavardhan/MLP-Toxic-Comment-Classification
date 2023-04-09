@@ -12,7 +12,12 @@ class MLP_Classifier():
     __file_handler = None
     __data_frame = None
     __word2vec_model = None
-
+    __X = None
+    __y = None
+    __X_trian = None
+    __y_train = None
+    __y_test = None
+    __X_test = None
     def __init__(self) -> None:
         pass
 
@@ -23,6 +28,7 @@ class MLP_Classifier():
         try:
             print("[I/O] Reading csv file: "+file_name)
             self.__data_frame = pd.read_csv(file_name)
+            self.__data_frame.dropna()
             print("[RESULT] Read file successfully, and initialized the data frame.")
         except Exception as e:
             print("[ERR] The following error occured while trying to read data from a csv file: "+str(e))
@@ -76,7 +82,9 @@ class MLP_Classifier():
         Then generates a embedding of fixed size for each word withing numpy mean and word2vec model that was trained previously.
         """
         try:
-            words = [word for word in text if word in self.__word2vec_model]
+            if text is None:
+                return
+            words = [word for word in text if word in self.__word2vec_model.wv]
             if words:
                 return np.mean(self.__word2vec_model.wv[words], axis=0)
             else:
@@ -90,9 +98,29 @@ class MLP_Classifier():
         This is achieved by the help of method text_to_embeddings that will generate an embedding for each comment.
         """
         try:
-            pass
+            print("[Word2Vec] Creating word embeddings for each comment within a new feature 'embedding'.")
+            print("[I/O] Please wait this might take longer than expected!")
+
+            self.__data_frame['embedding'] = self.__data_frame['preprocessed_text'].apply(self.text_to_embedding)
+            print("[Word2Vec] New feature 'embedding' created successfully!")
+            self.get_five()
         except Exception as e:
             print("[ERR] The following error occured while creating embeddings: " +str(e))
+
+    def split_data(self) -> None:
+        """
+        Creates Training set and Test set out of Dataframe.
+        """
+        try:
+            print("[DATA] Performing the data split.")
+            self.__X = np.stack(self.__data_frame['embedding'.values])
+            self.__y = self.__data_frame['toxic'].values
+
+            self.__X_trian, self.__X_test, self.__y_train, self.__y_test = train_test_split(self.__X, self.__y, test_size= 0.3, random_state=42)
+
+            print("[DATA] Training set and Test set have been extracted successfully from the dataframe!")
+        except Exception as e:
+            print("[ERR] The following error occured while trying to split the dataframe: "+str(e))
 
     def train_MLP_model(self, path_to_train_file: str, num_layers = 2) -> MLPClassifier:
         """
@@ -106,7 +134,10 @@ class MLP_Classifier():
             self.get_five() #show the updated data frame.
             
             self.train_word2vec_model() #train the word2vec model.
-            
+            self.create_embeddings() #create word embeddings.
+
+            self.split_data() #creates training and test set for model classification metrics.
+
         except Exception as e:
             print("[ERR] The following error occured while trying to train an MLP classifier: "+str(e))
 
