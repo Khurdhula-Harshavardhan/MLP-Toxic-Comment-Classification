@@ -18,6 +18,8 @@ class MLP_Classifier():
     __y_train = None
     __y_test = None
     __X_test = None
+    __model = None
+
     def __init__(self) -> None:
         pass
 
@@ -113,7 +115,7 @@ class MLP_Classifier():
         """
         try:
             print("[DATA] Performing the data split.")
-            self.__X = np.stack(self.__data_frame['embedding'.values])
+            self.__X = np.stack(self.__data_frame['embedding'].values)
             self.__y = self.__data_frame['toxic'].values
 
             self.__X_trian, self.__X_test, self.__y_train, self.__y_test = train_test_split(self.__X, self.__y, test_size= 0.3, random_state=42)
@@ -121,6 +123,15 @@ class MLP_Classifier():
             print("[DATA] Training set and Test set have been extracted successfully from the dataframe!")
         except Exception as e:
             print("[ERR] The following error occured while trying to split the dataframe: "+str(e))
+
+    def get_model_metrics(self) -> None:
+        """
+        Prints the metrics for the newly trained MLP classifier.
+        """
+        try:
+            pass
+        except Exception as e:
+            print("[ERR] The following error occured while trying to compute classfication metrics of the MLP model: "+str(e))
 
     def train_MLP_model(self, path_to_train_file: str, num_layers = 2) -> MLPClassifier:
         """
@@ -137,6 +148,18 @@ class MLP_Classifier():
             self.create_embeddings() #create word embeddings.
 
             self.split_data() #creates training and test set for model classification metrics.
+
+            print("[MLP] Creating a new instance of a Multi Layer Perceptron!")
+            self.__model = MLPClassifier(hidden_layer_sizes=(64, 32),max_iter=1000, activation='relu', solver='adam', random_state=42)
+            print("[MLP] A new instance for Multi Layer Perceptron has been created with the following hyper params: ")
+            print("[MLP] Size of Hidden Layers: "+str(num_layers))
+            print("[MLP] Max Iterations: 1000")
+            print("[MLP] Activation Function: ReLu ( x if x > 0 else 0 )")
+            print("[MLP] Solver: Adam.")
+
+            print("[MLP] Training this new instance of MLP, please wait this might take more than a minute.")
+            self.__model.fit(self.__X_trian, self.__y_train)
+            print("[MLP] Object reference for the trained and newly fitted MLP model: "+str(self.__model))
 
         except Exception as e:
             print("[ERR] The following error occured while trying to train an MLP classifier: "+str(e))
